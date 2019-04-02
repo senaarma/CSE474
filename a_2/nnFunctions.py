@@ -96,7 +96,6 @@ def nnObjFunction(params, *args):
     W1 = params[0:n_hidden * (n_input + 1)].reshape((n_hidden, (n_input + 1)))  # Input --> hidden
     W2 = params[(n_hidden * (n_input + 1)):].reshape((n_class, (n_hidden + 1)))  # Hidden --> output
     obj_val = 0
-    data = train_data
     # Feed Forwards Algo:
     # Calculating hidden layer nodes (1+2)
     i_data_bias = np.ones((len(train_data), 1)) 
@@ -110,13 +109,13 @@ def nnObjFunction(params, *args):
     one_to_k = np.eye(len(o), len(o[0]))[train_label]
     # Computing Error Function (5 + 15):
     obj_val = -1.0 * (np.sum(one_to_k*np.log(o)+(1-one_to_k)*np.log(1-o))/len(train_data)) 
-    obj_val_reg = obj_val + (lambdaval * (np.sum(W1)**2 + np.sum(W2)**2))/(2*len(train_data))
+    obj_val_reg = obj_val + (lambdaval * (np.sum(W1**2) + np.sum(W2**2)))/(2*len(train_data))
     # TODO Backpropogation:
     delta = o - one_to_k #o-y
     hidden = (1 - z) * z * np.dot(delta, W2)
     grad_w1 = np.dot(np.transpose(hidden), train_data)
-    deriv_W1 = (np.delete(grad_w1, len(grad_w1) - 1, 0) + lambdaval * W1) / len(data)
-    deriv_W2 = (np.dot(np.transpose(delta), z) + lambdaval * W2) / len(data)
+    deriv_W1 = (np.delete(grad_w1, len(grad_w1) - 1, 0) + lambdaval * W1) / len(train_data)
+    deriv_W2 = (np.dot(np.transpose(delta), z) + lambdaval * W2) / len(train_data)
     obj_grad = np.concatenate((deriv_W1.flatten(), deriv_W2.flatten()), 0)
     return obj_val_reg, obj_grad
 
