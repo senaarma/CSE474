@@ -106,7 +106,7 @@ def nnObjFunction(params, *args):
     z = np.concatenate((z, h_data_bias), 1)  # adding bias term to z
     o = sigmoid(np.dot(z, np.transpose(W2)))
     # 1-to-K encoding:
-    one_to_k = np.eye(len(o), len(o[0]))[train_label]
+    one_to_k = np.eye(len(o), len(o[0]))[train_label.astype(int)]
     # Computing Error Function (5 + 15):
     obj_val = -1.0 * (np.sum(one_to_k*np.log(o)+(1-one_to_k)*np.log(1-o))/len(train_data)) 
     obj_val_reg = obj_val + (lambdaval * (np.sum(W1**2) + np.sum(W2**2)))/(2*len(train_data))
