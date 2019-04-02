@@ -93,32 +93,32 @@ def nnObjFunction(params, *args):
     '''
     n_input, n_hidden, n_class, train_data, train_label, lambdaval = args
     # First reshape 'params' vector into 2 matrices of weights W1 and W2
-    W1 = params[0:n_hidden * (n_input + 1)].reshape((n_hidden, (n_input + 1))) #Input --> hidden
-    W2 = params[(n_hidden * (n_input + 1)):].reshape((n_class, (n_hidden + 1))) #Hidden --> output
+    W1 = params[0:n_hidden * (n_input + 1)].reshape((n_hidden, (n_input + 1)))  # Input --> hidden
+    W2 = params[(n_hidden * (n_input + 1)):].reshape((n_class, (n_hidden + 1)))  # Hidden --> output
     obj_val = 0
-
-    #Feed Forwards Algo:
-    #Calculating hidden layer nodes (1+2)
+    data = train_data
+    # Feed Forwards Algo:
+    # Calculating hidden layer nodes (1+2)
     i_data_bias = np.ones((len(train_data), 1)) 
-    train_data = np.concatenate ((train_data, i_data_bias),1) #adding bias term to x
-    z= sigmoid(np.dot(train_data,np.transpose(W1)))
-    #Calculating output layer nodes (3+4)
+    train_data = np.concatenate((train_data, i_data_bias), 1)  # adding bias term to x
+    z = sigmoid(np.dot(train_data, np.transpose(W1)))
+    # Calculating output layer nodes (3+4)
     h_data_bias = np.ones((len(z), 1)) 
-    z = np.concatenate ((z, h_data_bias),1) #adding bias term to z
+    z = np.concatenate((z, h_data_bias), 1)  # adding bias term to z
     o = sigmoid(np.dot(z, np.transpose(W2)))
-    #1-to-K encoding:
-    one_to_k = np.eye(len(o),len(o[0]))[train_label] 
-    #Computing Error Function (5 + 15):
+    # 1-to-K encoding:
+    one_to_k = np.eye(len(o), len(o[0]))[train_label]
+    # Computing Error Function (5 + 15):
     obj_val = -1.0 * (np.sum(one_to_k*np.log(o)+(1-one_to_k)*np.log(1-o))/len(train_data)) 
     obj_val_reg = obj_val + (lambdaval * (np.sum(W1)**2 + np.sum(W2)**2))/(2*len(train_data))
-    #TODO Backpropogation: 
+    # TODO Backpropogation:
     delta = o - one_to_k #o-y
-    
-    #Reshaping gradient matricies into 1D array
-    obj_grad = np.zeros(params.shape)
-    #obj_grad = np.concatenate((deriv_W1.flatten(), deriv_W2.flatten()),0)
-
-    return (obj_val_reg, obj_grad)
+    hidden = (1 - z) * z * np.dot(delta, W2)
+    grad_w1 = np.dot(np.transpose(hidden), train_data)
+    deriv_W1 = (np.delete(grad_w1, len(grad_w1) - 1, 0) + lambdaval * W1) / len(data)
+    deriv_W2 = (np.dot(np.transpose(delta), z) + lambdaval * W2) / len(data)
+    obj_grad = np.concatenate((deriv_W1.flatten(), deriv_W2.flatten()), 0)
+    return obj_val_reg, obj_grad
 
 
 def nnPredict(W1, W2, data):
@@ -146,7 +146,7 @@ def nnPredict(W1, W2, data):
     z = np.concatenate ((z, h_data_bias),1) #adding bias term to z
     o = sigmoid(np.dot(z, np.transpose(W2)))
 
-    labels = np.argmax (o, axis = 1) #getting each index of the output node that has the highest activation
+    labels = np.argmax (o, axis = 1) # getting each index of the output node that has the highest activation
 
     #print (labels.shape)
     #print (labels[0])
