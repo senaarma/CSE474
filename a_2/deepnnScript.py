@@ -64,7 +64,8 @@ weights = {
 biases = {
     'b1': tf.Variable(tf.random_normal([n_hidden_1])),
     'b2': tf.Variable(tf.random_normal([n_hidden_2])),
-    'b4': tf.Variable(tf.random_normal([n_hidden_4])),
+    'b3': tf.Variable(tf.random_normal([n_hidden_3])),
+    #'b4': tf.Variable(tf.random_normal([n_hidden_4])),
     #'b5': tf.Variable(tf.random_normal([n_hidden_5])),
     #'b6': tf.Variable(tf.random_normal([n_hidden_6])),
     #'b7': tf.Variable(tf.random_normal([n_hidden_7])),
@@ -80,7 +81,7 @@ def multilayer_perceptron(x):
     # Hidden fully connected layer with 128 neurons
     layer_2 = tf.add(tf.matmul(layer_1, weights['h2']), biases['b2'])
     layer_2 = tf.nn.sigmoid(layer_2)
-    layer_2 = tf.nn.dropout(layer_2, dropout)
+    #layer_2 = tf.nn.dropout(layer_2, dropout)
     
     layer_3 = tf.add(tf.matmul(layer_2, weights['h3']), biases['b3'])
     layer_3 = tf.nn.sigmoid(layer_3)
