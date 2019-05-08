@@ -11,28 +11,28 @@ class NBC(BaseEstimator):
     (a,b) - Beta prior parameters for the class random variable
     alpha - Symmetric Dirichlet parameter for the features
     '''
-    
+
     def __init__(self, a=1, b=1, alpha=1):
         self.a = a
         self.b = b
         self.alpha = alpha
         self.__params = None
-    
+        
     def get_a(self):
         return self.a
-    
+
     def get_b(self):
         return self.b
-    
+
     def get_alpha(self):
         return self.alpha
-    
+
     # you need to implement this function
     #nbTrain
     def fit(self,X,y):
         '''
         This function does not return anything
-            
+        
         Inputs:
         X: Training data set (N x d numpy array)
         y: Labels (N length numpy array)
@@ -41,43 +41,43 @@ class NBC(BaseEstimator):
         b = self.get_b()
         alpha = self.get_alpha()
         self.__classes = np.unique(y)
-        
-        params = None
+
+        params = None 
         N = len(y)
         N1 = np.sum(y == 1)
         N2 = np.sum(y == 2)
         #Calculating theta (Eq 5)
-        theta_bayes_1 = (N1+a)/(N+a+b) #P(Y=1)
+        theta_bayes_1 = (N1+a)/(N+a+b) #P(Y=1) 
+
         #Calcuating params for Naive Bayes (Eq 8 & 9)
         customer_good = np.where(y == 1) #returns all indices where y=1
         good_reviews = X[customer_good[0],:] #gets specific rows where Y=1
         theta_1_j = []
         for i in range(len(good_reviews[0])):
-            unique_features, unique_counts = np.unique(good_reviews[:,i], return_counts=True) #returns unique features and their occurances
+            unique_features, unique_occur = np.unique(good_reviews[:,i], return_counts=True) #returns unique features and their occurances
             Kj = len(unique_features) #Count of unqiue values for a given feature
-            #unique_counts = np.unique(good_reviews[:,i], return_counts=True)[1]
-            temp = []
-            for j in range (len(unique_counts)): #Computing theta_1_j
-                theta_1 = (unique_counts[j]+alpha)/(N1+Kj*alpha)
-                temp.append (theta_1)
-            theta_1_j.append(temp)
-    
-        customer_bad = np.where(y == 2) #returns all indecies where y=2
-        bad_reviews = X[customer_bad[0],:] #creating matrix of rows where Y=2
+            good_dict = {}
+            for j in range (len(unique_features)): #Computing theta_1_j
+                theta_1 = (unique_occur[j]+alpha)/(N1+Kj*alpha) #(Eq 8)
+                good_dict[unique_features[j]]=theta_1
+            theta_1_j.append(good_dict)
+        
+        customer_bad = np.where(y == 2) #returns all indices where y=1
+        bad_reviews = X[customer_bad[0],:] #gets specific rows where Y=1
         theta_2_j = []
         for i in range(len(bad_reviews[0])):
-            unique_features_b, unique_counts_b = np.unique(bad_reviews[:,i], return_counts=True)
-            Kj_b = len(unique_features_b)
-            temp_b = []
-            for j in range (len(unique_counts_b)): #Computing theta_2_j
-                theta_2 = (unique_counts_b[j]+alpha)/(N2+Kj*alpha)
-                temp_b.append (theta_2)
-            theta_2_j.append(temp_b)
-        
-        params = [theta_bayes_1,theta_1_j,theta_2_j]
+            unique_features_b, unique_occur_b = np.unique(bad_reviews[:,i], return_counts=True) #returns unique features and their occurances
+            Kj = len(unique_features_b) #Count of unqiue values for a given feature
+            bad_dict = {}
+            for j in range (len(unique_occur_b)): #Computing theta_1_j
+                theta_2 = (unique_occur_b[j]+alpha)/(N2+Kj*alpha) #(Eq 9)
+                bad_dict[unique_features_b[j]]=theta_2
+            theta_2_j.append(bad_dict)
+
+        params = [theta_bayes_1,theta_1_j,theta_2_j, N1, N2]
         # do not change the line below
         self.__params = params
-
+    
     # you need to implement this function
     #nbPredict
     def predict(self,Xtest):
@@ -94,8 +94,38 @@ class NBC(BaseEstimator):
         a = self.get_a()
         b = self.get_b()
         alpha = self.get_alpha()
+        
+        predictions = np.zeros(Xtest.shape[0])
+        good_dict = params[1]
+        bad_dict = params[2]
+        N1 = params [3]
+        N2 = params [4]
+
+        for i in range (len(Xtest)):
+            row = Xtest[i,:]
+            prod_1 = 1.0
+            prod_2 =1.0
+            for j in range (len(row)): 
+                if (good_dict[j].get(row[j])==None):  #Piazza cases... where count = 0
+                    prod_1 = prod_1 * (alpha/N1+len(good_dict)*alpha)
+                    # print (j)
+                    # print (row[j])
+                    # print (bad_dict[j])
+                else : 
+                    prod_1 = prod_1 * good_dict[j].get(row[j]) #multplying all theta_1_js for the values given in each row 
+
+                if (bad_dict[j].get(row[j])==None): #Piazza cases... where count = 0
+                    prod_2 = prod_2 * (alpha/N2+len(bad_dict)*alpha) 
+                else : 
+                    prod_2 = prod_2 * bad_dict[j].get(row[j]) #multplying all theta_2_js for the values given in each row 
+
+            probability_1 = (params[0]*prod_1)/((params[0]*prod_1)+((1-params[0])*prod_2)) #(Eq 3)
+            probability_2= ((1-params[0])*prod_2)/((params[0]*prod_1)+((1-params[0])*prod_2)) #(Eq 4)
+            if(probability_1>probability_2): predictions[i]=1
+            else: predictions[i]=2
+
         #remove next line and implement from here
-        predictions = np.random.choice(self.__classes,np.unique(Xtest.shape[0]))
+        #predictions = np.random.choice(self.__classes,np.unique(Xtest.shape[0]))
         #do not change the line below
         return predictions
 
